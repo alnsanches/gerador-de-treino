@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Treinos</title>
+  <style>
+    :root {
+      --bg-light: #f0f4f8;
+      --bg-dark: #1e1e1e;
+      --text-light: #333;
+      --text-dark: #eee;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: var(--bg-light);
+      color: var(--text-light);
+      max-width: 600px;
+      margin: auto;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    body.dark-mode {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    h2 {
+      text-align: center;
+      color: #2e7d32;
+    }
+
+    label, button, select {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      font-size: 1rem;
+    }
+
+    .tempo-btns button {
+      width: 48%;
+      display: inline-block;
+      margin-top: 10px;
+    }
+
+    input, select {
+      padding: 10px;
+      border: 1px solid #bbb;
+      border-radius: 8px;
+    }
+
+    button {
+      background-color: #4caf50;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background-color 0.3s, border 0.3s;
+    }
+
+    button:hover {
+      background-color: #388e3c;
+    }
+
+    .selected {
+      border: 5px solid red;
+    }
+
+    #resultado {
+      margin-top: 30px;
+      padding: 15px;
+      background: #ffffffcc;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    body.dark-mode #resultado {
+      background: #2c2c2c;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    #resetar {
+      background-color: #f44336;
+    }
+
+    #resetar:hover {
+      background-color: #c62828;
+    }
+
+    .emoji {
+      font-size: 1.2rem;
+      margin-right: 5px;
+    }
+
+    #cronometro {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    #modoBtn {
+      background-color: #555;
+    }
+
+    #modoBtn:hover {
+      background-color: #222;
+    }
+
+    #iniciarTreino {
+      display: none;
+      background-color: #2196f3;
+    }
+
+    #iniciarTreino:hover {
+      background-color: #0d47a1;
+    }
+  </style>
+</head>
+<body>
+  <h2>Gerador de Treino Inteligente 🏋️‍♂️</h2>
+  <label>⏱️ Quanto tempo você tem (em minutos)?</label>
+  <div class="tempo-btns">
+    <button onclick="selecionarTempo(10)">10 minutos</button>
+    <button onclick="selecionarTempo(20)">20 minutos</button>
+    <button onclick="selecionarTempo(30)">30 minutos</button>
+    <button onclick="selecionarTempo(40)">40 minutos</button>
+    <button onclick="selecionarTempo(50)">50 minutos</button>
+    <button onclick="selecionarTempo(60)">60 minutos</button>
+  </div>
+
+  <label for="categoria">🏃‍♀️ Tipo de treino:</label>
+  <select id="categoria">
+    <option value="geral">Geral</option>
+    <option value="cardio">Cardio</option>
+    <option value="forca">Força</option>
+    <option value="core">Core/Abdômen</option>
+  </select>
+
+  <button onclick="gerarTreino()">Gerar Treino</button>
+  <button id="iniciarTreino" onclick="iniciarCronometroComConfirmacao()">✅ Deseja iniciar seu treino agora?</button>
+  <button id="resetar" onclick="resetarFormulario()" style="display:none">Escolher Outro Tempo</button>
+  <button id="modoBtn" onclick="alternarModo()">🌙 Alternar Modo</button>
+  <div id="resultado"></div>
+  <div id="cronometro"></div>
+
+  <script>
+    const exerciciosPorCategoria = {
+      geral: ["Agachamento com peso corporal", "Flexão de braço", "Prancha 30s", "Burpees", "Polichinelo", "Avanço alternado", "Mountain climbers", "Ponte (glute bridge)", "Salto lateral"],
+      cardio: ["Polichinelo", "Corrida estacionária", "Mountain climbers", "Joelho alto", "Burpees", "Salto lateral"],
+      forca: ["Agachamento com peso corporal", "Flexão de braço", "Ponte (glute bridge)", "Avanço alternado", "Elevação de perna", "Prancha 30s"],
+      core: ["Prancha 30s", "Abdominal bicicleta", "Prancha lateral", "Elevação de perna", "Ponte (glute bridge)"]
+    };
+
+    const temposPermitidos = [10, 20, 30, 40, 50, 60];
+    let tempoSelecionado = 0;
+
+    function selecionarTempo(tempo) {
+      tempoSelecionado = tempo;
+      document.querySelectorAll('.tempo-btns button').forEach(btn => btn.classList.remove('selected'));
+      const botoes = document.querySelectorAll('.tempo-btns button');
+      botoes.forEach(btn => {
+        if (btn.textContent.includes(tempo)) {
+          btn.classList.add('selected');
+        }
+      });
+    }
+
+    function gerarTreino() {
+      const tempo = tempoSelecionado;
+      const categoria = document.getElementById("categoria").value;
+      const resultado = document.getElementById("resultado");
+      const cronometro = document.getElementById("cronometro");
+      resultado.innerHTML = "";
+      cronometro.innerHTML = "";
+
+      if (!temposPermitidos.includes(tempo)) {
+        resultado.innerHTML = `<p>⛔ Não há treino programado para <strong>${tempo} minutos</strong>. Tente: ${temposPermitidos.join(", ")} minutos.</p>`;
+        return;
+      }
+
+      const lista = exerciciosPorCategoria[categoria];
+      const numExercicios = Math.min(Math.floor(tempo / 3), lista.length);
+      const treino = [...lista].sort(() => 0.5 - Math.random()).slice(0, numExercicios);
+
+      let emoji = categoria === "cardio" ? "🔥" : categoria === "forca" ? "💪" : categoria === "core" ? "🧘" : "🏋️";
+      let html = `<h3>${emoji} Treino do Dia (${tempo} minutos)</h3><ul>`;
+      treino.forEach(ex => {
+        html += `<li class="emoji">✅ ${ex}</li>`;
+      });
+      html += `</ul>`;
+
+      resultado.innerHTML = html;
+      document.getElementById("resetar").style.display = "block";
+      document.getElementById("iniciarTreino").style.display = "block";
+
+      if (localStorage.getItem('ultimoTreino') !== html) {
+        localStorage.setItem('ultimoTreino', html);
+      }
+    }
+
+    function iniciarCronometroComConfirmacao() {
+      iniciarCronometro(tempoSelecionado * 60);
+      document.getElementById("iniciarTreino").style.display = "none";
+    }
+
+    function iniciarCronometro(segundos) {
+      const cronometro = document.getElementById("cronometro");
+      let restante = segundos;
+
+      const timer = setInterval(() => {
+        let min = Math.floor(restante / 60);
+        let seg = restante % 60;
+        cronometro.textContent = `⏳ Tempo restante: ${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`;
+
+        if (--restante < 0) {
+          clearInterval(timer);
+          cronometro.textContent = "✅ Treino finalizado! Ótimo trabalho!";
+        }
+      }, 1000);
+    }
+
+    function resetarFormulario() {
+      tempoSelecionado = 0;
+      document.getElementById("resultado").innerHTML = "";
+      document.getElementById("cronometro").innerHTML = "";
+      document.getElementById("resetar").style.display = "none";
+      document.getElementById("iniciarTreino").style.display = "none";
+      document.querySelectorAll('.tempo-btns button').forEach(btn => btn.classList.remove('selected'));
+    }
+
+    function alternarModo() {
+      document.body.classList.toggle("dark-mode");
+    }
+
+    window.onload = function() {
+      const ultimo = localStorage.getItem('ultimoTreino');
+      if (ultimo) {
+        document.getElementById("resultado").innerHTML = `<h4>📌 Último treino salvo:</h4>${ultimo}`;
+        document.getElementById("resetar").style.display = "block";
+        document.getElementById("iniciarTreino").style.display = "block";
+      }
+    }
+  </script>
+</body>
+</html>
